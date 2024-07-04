@@ -1,0 +1,36 @@
+Command Line Interface (CLI):
+
+CLI (Common Language Interface) (command package)
+
+Except for some early bootstrapping in the root package, when a user launches the terraform programme, execution immediately jumps into one of the command package’s “command” implementations (not shown in the diagram). The commands store the mapping between user-facing command names and their corresponding command package types. The go file is located in the repository’s root directory.
+
+The command implementation’s responsibility for these commands is to read and parse any command line arguments, command-line options, and environment variables required for the specified command and use them to construct a backend. object of operation The operation is then passed to the currently selected backend.
+
+Backends:
+
+A backend in Terraform is responsible for a number of things:
+
+Execute operations (e.g. plan, apply)
+Variables defined in the workspace can be saved.
+to store the current state
+The local backend retrieves the current state for the workspace specified in the operation using a state manager (either statemgr.Filesystem if the local backend is used directly, or an implementation provided by whatever backend is being wrapped), and then uses the config loader to load and perform initial processing/validation of the configuration specified in the operation. It then creates a terraform.context object using these parameters as well as the other parameters supplied in the process. The main object performs terraform operations.
+
+Configuration Loader :
+
+Model types represent the top-level configuration structure in package configs. Config represents a configuration (the root module and all of its child modules). Although the configs package contains some low-level functionality for creating configuration objects, the configload is the primary entry point. Loader can be found in the configload subpackage. A loader handles all of the complexities associated with installing child modules (during terraform init) and then locating those modules when a configuration is loaded by a backend. It takes the path to the root module and loads all of the child modules recursively to produce a single configuration.
+
+State Manager:
+
+The state manager is in charge of storing and retrieving snapshots of a workspace’s Terraform state. Each manager implements a subset of the interfaces provided by the statemgr package, with the majority of managers covering the entire set of statemgr. Complete operation. The smaller interfaces are commonly used in other function signatures to specify what actions the function may take on the state manager; there is no reason to create a state manager that does not implement all of statemgr. Full.
+
+Graph Builder:
+
+The terrain. The Context method calls a graph builder. A graph builder is used to represent the fundamental phases of that action, as well as the dependencies between them. Because of the differences in the graph-building process, each operation has its own graph builder. For a “plan” operation, a graph must be constructed directly from the configuration, whereas a “apply” action constructs its graph from the set of alterations mentioned in the plan being applied.
+
+Graph Walk:
+
+The graph walking method explores each vertex of the graph while keeping the graph’s “happens after” edges in mind. Every vertex in the graph is evaluated so that the “happens after” edges are taken into account. The graph walk algorithm will evaluate multiple vertices at once if possible.
+
+Vertex Evaluation:
+
+Execution refers to the action taken for each vertex during a graph walk. Execution performs a set of random operations that are appropriate for the vertex type in question. Before the graph walk can begin evaluating other vertices with “happens after” edges, a vertex must be correctly completed. When one or more errors occur during evaluation, the graph walk is paused, and the errors are returned to the user. questions for terraform interviews
